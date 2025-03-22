@@ -206,6 +206,6 @@ app.post("/gemini", async (req, res) => {
 });
 
 // Start Server
-app.listen(8081, '0.0.0.0', () => {
-    console.log("Server running on port 8081");
+app.listen(3000, '0.0.0.0', () => {
+    console.log("Server running on port 3000");
 });

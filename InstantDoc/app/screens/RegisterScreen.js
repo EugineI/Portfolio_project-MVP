@@ -26,7 +26,7 @@ export default function RegisterScreen({ navigation }) {
         }
 
         setLoading(true);
-        axios.post("http://192.168.1.5:8081/register", { name, email, password })
+        axios.post("http://192.168.1.7:3000/register", { name, email, password })
             .then(response => {
                 Alert.alert("Success", "Registration successful!");
                 navigation.navigate("Login");

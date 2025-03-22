@@ -13,7 +13,7 @@ export default function ChatScreen() {
     setMessages((prevMessages) => [...prevMessages, userMessage]);
 
     try {
-        const response = await axios.post("http://192.168.1.5:8081/gemini", { prompt: input });
+        const response = await axios.post("http://192.168.1.7:3000/gemini", { prompt: input });
         console.log("Gemini API Response:", response.data); // ✅ Log response
 
         const botMessage = { sender: "bot", text: response.data.reply || "No response" };

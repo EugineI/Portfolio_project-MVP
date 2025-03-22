@@ -21,7 +21,7 @@ const LoginScreen = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post("http://192.168.1.5:8081/login", { email, password });
+            const response = await axios.post("http://192.168.1.7:3000/login", { email, password });
 
             console.log("Server Response:", response.data);
 

@@ -3,15 +3,15 @@ import { View, Text, ActivityIndicator, StyleSheet, Alert } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import axios from "axios";
+import Constants from "expo-constants";
 
-const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY"; // Replace with your actual key
+const GOOGLE_MAPS_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
 
 export default function HospitalScreen() {
     const [location, setLocation] = useState(null);
     const [hospitals, setHospitals] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [nearestHospital, setNearestHospital] = useState(null);
-    const [distance, setDistance] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         (async () => {
@@ -32,13 +32,9 @@ export default function HospitalScreen() {
             const response = await axios.get(
                 `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=5000&type=hospital&key=${GOOGLE_MAPS_API_KEY}`
             );
-
-            const hospitalsData = response.data.results;
-            setHospitals(hospitalsData);
-
-            if (hospitalsData.length > 0) {
-                findNearestHospital(latitude, longitude, hospitalsData);
-            }
+            const hospitalList = response.data.results;
+            setHospitals(hospitalList);
+            findNearestHospital(latitude, longitude, hospitalList);
         } catch (error) {
             console.error("Error fetching hospitals:", error);
         } finally {
@@ -46,36 +42,38 @@ export default function HospitalScreen() {
         }
     };
 
-    const findNearestHospital = (userLat, userLng, hospitalsData) => {
-        let minDistance = Infinity;
-        let closestHospital = null;
+    const findNearestHospital = (userLat, userLng, hospitalList) => {
+        if (!hospitalList.length) return;
 
-        hospitalsData.forEach((hospital) => {
-            const { lat, lng } = hospital.geometry.location;
-            const dist = getDistance(userLat, userLng, lat, lng);
+        let nearest = null;
+        let minDistance = Number.MAX_VALUE;
 
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestHospital = hospital;
+        hospitalList.forEach(hospital => {
+            const hospitalLat = hospital.geometry.location.lat;
+            const hospitalLng = hospital.geometry.location.lng;
+            const distance = getDistance(userLat, userLng, hospitalLat, hospitalLng);
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = { name: hospital.name, distance: minDistance.toFixed(2) };
             }
         });
 
-        setNearestHospital(closestHospital);
-        setDistance(minDistance.toFixed(2)); // Convert distance to 2 decimal places
+        setNearestHospital(nearest);
     };
 
+    // Haversine formula to calculate distance between two lat/lng points
     const getDistance = (lat1, lon1, lat2, lon2) => {
-        const toRad = (angle) => (angle * Math.PI) / 180;
-        const R = 6371; // Radius of Earth in km
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-
+        const R = 6371; // Radius of the Earth in km
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
         const a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            Math.cos(lat1 * (Math.PI / 180)) *
+                Math.cos(lat2 * (Math.PI / 180)) *
+                Math.sin(dLon / 2) *
+                Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
         return R * c; // Distance in km
     };
 
@@ -108,11 +106,15 @@ export default function HospitalScreen() {
                 </MapView>
             )}
 
+            {/* Display nearest hospital information */}
             {nearestHospital && (
-                <View style={styles.infoBox}>
-                    <Text style={styles.hospitalName}>{nearestHospital.name}</Text>
-                    <Text style={styles.hospitalDetails}>{nearestHospital.vicinity}</Text>
-                    <Text style={styles.hospitalDistance}>Distance: {distance} km</Text>
+                <View style={styles.nearestContainer}>
+                    <Text style={styles.nearestText}>
+                        Nearest Hospital: {nearestHospital.name}
+                    </Text>
+                    <Text style={styles.nearestText}>
+                        Distance: {nearestHospital.distance} km
+                    </Text>
                 </View>
             )}
         </View>
@@ -123,18 +125,22 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     map: { flex: 1 },
     loader: { flex: 1, justifyContent: "center", alignItems: "center" },
-    infoBox: {
-        backgroundColor: "white",
-        padding: 15,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+    nearestContainer: {
         position: "absolute",
-        bottom: 0,
-        width: "100%",
-        alignItems: "center",
+        bottom: 20,
+        left: 20,
+        right: 20,
+        backgroundColor: "white",
+        padding: 10,
+        borderRadius: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
         elevation: 5,
+        alignItems: "center",
     },
-    hospitalName: { fontSize: 18, fontWeight: "bold" },
-    hospitalDetails: { fontSize: 14, color: "gray" },
-    hospitalDistance: { fontSize: 16, color: "#007bff", marginTop: 5 },
+    nearestText: { fontSize: 16, fontWeight: "bold" },
 });
+
+

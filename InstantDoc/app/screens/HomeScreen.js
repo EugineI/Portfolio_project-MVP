@@ -27,7 +27,7 @@ export default function HomeScreen() {
     // Fetch saved contacts from the backend
     const fetchContacts = async (id) => {
         try {
-            const response = await axios.get(`http://192.168.1.5:8081/contacts/${id}`);
+            const response = await axios.get(`http://192.168.1.7:3000/contacts/${id}`);
             setContacts(response.data);
         } catch (error) {
             console.error("Error fetching contacts:", error);
@@ -52,7 +52,7 @@ export default function HomeScreen() {
         }
 
         try {
-            const response = await axios.post("http://192.168.1.5:8081/contacts", { user_id, name, phone });
+            const response = await axios.post("http://192.168.1.7:3000/contacts", { user_id, name, phone });
             setContacts([...contacts, { id: response.data.id, name, phone }]);
             setName("");
             setPhone("");
@@ -84,7 +84,7 @@ const deleteContact = async (id) => {
     }
 
     try {
-        const response = await axios.delete(`http://192.168.1.5:8081/contacts/${id}`);
+        const response = await axios.delete(`http://192.168.1.7:3000/contacts/${id}`);
         console.log("Delete response:", response.data);
 
         // Update the state safely
